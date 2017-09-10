@@ -5,34 +5,34 @@ In the following I will adress the [Rubic](https://review.udacity.com/#!/rubrics
 
 ## Introduction
 The target of this project was to drive a car safely around a circular track which has a length of 4.32 miles. To be successful the car was not allowed to:
-1. Collide with another car's
+1. Collide with another car
 2. Leave the right three lines
-3. The car has to stay within its current line, except for reasoning overtaking maneuvers
+3. The car has to stay within its current line, except for reasonable overtaking maneuvers
 4. Do not drive over 50mph
 5. Do not make movements that have a too high acceleration or jerk
 
-My final submission code was able to drive the car safely around the track multiple times. The following video shows the first round with multiple line chances and an emergency brake after a car in front of my changed into my line.
+My final submission code was able to drive the car safely around the track multiple times. The following video shows the first round with multiple line chances and an emergency brake after a car in front of me changed into my line.
 
 <a href="https://youtu.be/TWGzA-gpgVI" target="_blank"><img src="http://img.youtube.com/vi/TWGzA-gpgVI/0.jpg"  alt="First Track" width="720" height="360" border="10" /></a>
 
 ## Path planning
 
 ### Speed Limit
-To drive the car within the speed limit of 50mph I set the speed limit for the car slightly below 50 MPH to 49.75 MPH. I tested the code with higher velocity and its works up to 60mph fine. Except the message that my car was violating the speed limit.  
+To drive the car within the speed limit of 50mph I set the speed limit for the car slightly below 50 MPH to 49.75 MPH. I tested the code with higher velocity and up to 60mph it worked fine, except for the message that my car was violating the speed limit.  
 ```cpp
   // maximal velocity!
   double max_vel = 49.75;
 ``` 
 
 ### Max Acceleration and Jerk
-Like the speed limit, the max acceleration and jerk are handled by the spline approximation technique with is exceptionally good explained in the walkthrough video of the course. After following the provided code hints from the video and using the provided spline technique from this [source](http://kluge.in-chemnitz.de/opensource/spline/) the  the acceleration and jerk was all times in range.
+Like the speed limit, the max acceleration and jerk are handled by the spline approximation technique which is exceptionally good explained in the walkthrough video of the course. After following the provided code hints from the video and using the provided spline technique from this [source](http://kluge.in-chemnitz.de/opensource/spline/) the  the acceleration and jerk was in range at all times .
 
 ### Staying in line and line changes for overtaking maneuvers
-My approach to decide when to stay in line or overtake was the following.
+My approach to decide when to stay in line and when to overtake was the following:
 
-1. For each car in each line calculate the distance to my car. This was done by using the car's [s] position in frenet coordinates
-2. For performance reasons save only the distance to the car right in front and back of my car for each line. If there is no car on the lane the distance is set to 999. That value is used later for the cost function again. 
-3. If the distance to the car in front of mine is closer that 30. The car will be flagged as to close.
+1. Calculate the distance to my car for each car in each line. This was done by using the car's [s] position in frenet coordinates
+2. For performance reasons I saved only the distance to the car right in front of me and behind my car for each line. If there is no car on the lane the distance is set to 999. That value is used for the cost function again later. 
+3. If the distance to the car in front of me is closer that 30. The car will be flagged as to close.
 ```cpp
    // count car´s per lane 
    vector<int> lane_car_count={0,0,0};
@@ -51,14 +51,14 @@ My approach to decide when to stay in line or overtake was the following.
    else if (car_distance < 0 && lane_car_distlist_back[other_lane] < car_distance)
       lane_car_distlist_back[other_lane] = car_distance;
 ``` 
-After that three steps the debug output shows the following values:
+After these three steps the debug output shows the following values:
 current lane: 2 // the lane of my car
-too close! // the car in front of mine, one the same lane, is to close 
-5	 	 4	 	3 // on lane zero are 5 cars, lane one has 4 cars and on lane 2 are three cars.
+too close! // the car in front of me, on the same lane, is to close 
+5	 	 4	 	3 // on lane zero are 5 cars, on lane one are 4 cars and on lane 2 are 3 cars.
 7 -89	 | 3 -51	 | 29 -75 // On lane 0 the next car is 7 in front of mine and 89 behind, etc...
 
-4. If the "to close" flag is set I check two options: 
-4.1. Check if it is save to overtake? For that I check for the next possible lane if the gap between the car in front and in the back of mine on the other lane is big enough and the car in front on the other lane is further away that the car on my lane. If I am on the center lane I check both lanes and use also the lane where the next car in front is further away. If both criteria are fulfilled I set lane to the calculated best lane.
+4. If the "to close" flag rises I check two options: 
+4.1. Is it save to overtake? First, I check if if the gap between the car in front and behind my car on the neighbouring lanes. If the gap on the other lane is big enough and the leading car on the other lane is further away that the car on my lane the car will change lines. If I am on the center lane I check both lanes and choose the lane on which the next car in front is further away. If both criteria are fulfilled I change to the calculated best lane.
 ```cpp
           if (too_close) {
             vector<int> possible_lanes;
@@ -98,11 +98,11 @@ too close! // the car in front of mine, one the same lane, is to close
             ref_vel += .224;
           }
 ``` 
-4.2. If it is not save to overtake I stay on that lane and reduce speed. 
+4.2. If it is not save to overtake I stay on the current lane and reduce speed. 
 
 ### Further improvments
-1) The model is to simple for the real world. It can not handle complex maneuvers like falling behind and start than an overtake maneuver
-2) If the car is behind another car and can not overtake it is not set to the speed of the car in front. Instead the car decelerate if it is to close and accelerate if it is too far behind. It would be more efficient to set the speed to speed of the car in front. 
+1) The model is too simple for the real world. It cannot handle complex maneuvers like falling behind and then start an overtaking maneuver
+2) If the car is behind another car and cannot overtake it is not set to the speed of the car in front. Instead the car decelerate if it is to close and accelerate if it is too far behind. It would be more efficient to set the speed to speed of the car in front. 
 
    
 ### Simulator.
